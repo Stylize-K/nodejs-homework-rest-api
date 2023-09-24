@@ -2,6 +2,7 @@ const app = require("./app");
 const mongoose = require("mongoose");
 const { DB_HOST, PORT = 3000 } = process.env;
 
+// Підключення до DB та запуск сервера
 mongoose
   .connect(DB_HOST)
   .then(() => {
