@@ -1,6 +1,7 @@
 const { Schema, model } = require("mongoose");
 const { handleMongooseError } = require("../helpers");
 const Joi = require("joi");
+const { userSubscriptionEnum } = require("../constants");
 
 const userSchema = new Schema(
   {
@@ -50,9 +51,19 @@ const loginSchema = Joi.object({
   }),
 });
 
+const updateSubscriptionSchema = Joi.object({
+  subscription: Joi.string()
+    .valid(...Object.values(userSubscriptionEnum))
+    .required()
+    .messages({
+      "any.required": "missing required subscription field",
+    }),
+});
+
 const schemas = {
   registerSchema,
   loginSchema,
+  updateSubscriptionSchema,
 };
 
 const User = model("user", userSchema);

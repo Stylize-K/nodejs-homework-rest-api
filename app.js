@@ -14,7 +14,10 @@ app.use(logger(formatsLogger));
 app.use(cors());
 app.use(express.json());
 
-app.use("/api/auth", authRouter);
+// Підключення роутера для реєстрації/авторизації користувачів
+app.use("/users", authRouter);
+
+// Підключення роутера для доступу до контактів
 app.use("/api/contacts", contactsRouter);
 
 app.use((req, res) => {
