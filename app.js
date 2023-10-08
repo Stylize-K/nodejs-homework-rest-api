@@ -13,6 +13,7 @@ const formatsLogger = app.get("env") === "development" ? "dev" : "short";
 app.use(logger(formatsLogger));
 app.use(cors());
 app.use(express.json());
+app.use(express.static("public")); // мідлвара, яка дозволяє при запиті статичних файлів, шукати та віддавати їх тільки з папки public. За замовченням, при запиті файлів сервер нічого не віддає.
 
 // Підключення роутера для реєстрації/авторизації користувачів
 app.use("/users", authRouter);

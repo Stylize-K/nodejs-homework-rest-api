@@ -1,10 +1,17 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const gravatar = require("gravatar");
+const path = require("path");
+const fs = require("fs/promises");
+const jimp = require("jimp");
+
 const { User } = require("../models/user");
 const { HttpError, ctrlWrapper } = require("../helpers");
 const { userSubscriptionEnum } = require("../constants");
 
 const { SECRET_KEY } = process.env;
+
+const avatarsDir = path.join(__dirname, "../", "public", "avatars");
 
 // Контроллер реєстрації користувача
 const register = async (req, res) => {
@@ -16,7 +23,14 @@ const register = async (req, res) => {
   // Виконуємо хешування пароля користувача перед збереженням у DB (за допомогою bcrypt)
   const hashPassword = await bcrypt.hash(password, 10);
 
-  const newUser = await User.create({ ...req.body, password: hashPassword });
+  // Генеруємо унікальний аватар юзера по email та повертаємо URL аватара (пакет gravatar)
+  const avatarURL = gravatar.url(email);
+
+  const newUser = await User.create({
+    ...req.body,
+    password: hashPassword,
+    avatarURL,
+  });
 
   res.status(201).json({
     user: {
@@ -92,6 +106,29 @@ const updateUserSubscription = async (req, res) => {
   res.status(200).json(updatedUser);
 };
 
+// Оновлення аватара користувача (updateAvatar)
+const updateAvatar = async (req, res) => {
+  const { _id } = req.user;
+  const { path: tempUpload, originalname } = req.file;
+  const filename = `${_id}_${originalname}`; // Робимо унікальним ім'я файлу, дадаючи id на початок імені
+  const resultUpload = path.join(avatarsDir, filename);
+
+  // Зменшуємо аватар до 250х250 за допомогою пакета jimp
+  const avatar = await jimp.read(tempUpload);
+  await avatar
+    .resize(250, 250, jimp.RESIZE_BEZIER)
+    .normalize()
+    .quality(50)
+    .writeAsync(tempUpload);
+
+  // Переносимо оброблений аватар з папки temp до папки public/avatars
+  await fs.rename(tempUpload, resultUpload);
+  const avatarURL = path.join("avatars", filename);
+  await User.findByIdAndUpdate(_id, { avatarURL });
+
+  res.json({ avatarURL });
+};
+
 // Експортуємо контроллери, огорнуті у ctrlWrapper (Функція-декоратор, що огортає в try..catch кожен контроллер)
 module.exports = {
   register: ctrlWrapper(register),
@@ -99,4 +136,5 @@ module.exports = {
   getCurrent: ctrlWrapper(getCurrent),
   logout: ctrlWrapper(logout),
   updateUserSubscription: ctrlWrapper(updateUserSubscription),
+  updateAvatar: ctrlWrapper(updateAvatar),
 };
