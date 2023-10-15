@@ -9,6 +9,14 @@ const router = express.Router();
 
 // Реєстрація юзера (sign up)
 router.post("/register", validateBody(schemas.registerSchema), ctrl.register);
+// Верифікація нового юзера
+router.get("/verify/:verificationToken", ctrl.verifyEmail);
+// Повторна відпрака листа верифікації
+router.post(
+  "/verify",
+  validateBody(schemas.emailSchema),
+  ctrl.resendVerifyEmail
+);
 // Логінізація юзера (sign in)
 router.post("/login", validateBody(schemas.loginSchema), ctrl.login);
 // Підтвердження поточного користувача (current)
